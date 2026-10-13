@@ -1,0 +1,3 @@
+﻿id,title,type,required,options,page_id,trait
+C01,我會比較價格,likert,true,,P1,price_sensitivity
+C02,選擇服務時的考量,multiple,true,價格|品質|品牌|社群,P1,

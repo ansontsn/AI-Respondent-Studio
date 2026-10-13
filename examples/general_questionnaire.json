@@ -1,0 +1,170 @@
+{
+  "id": "service-demo-v1",
+  "title": "數位服務體驗功能測試",
+  "description": "",
+  "topic": "數位服務",
+  "audience": "由使用者定義",
+  "purpose": "test",
+  "pages": [
+    {
+      "id": "P1",
+      "title": "服務情境",
+      "questions": [
+        {
+          "id": "S01",
+          "title": "我願意嘗試新的數位服務",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "openness",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "S02",
+          "title": "我會比較各服務的費用",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "price_sensitivity",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "S03",
+          "title": "我不喜歡嘗試新服務",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "openness",
+          "reverse": true,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "S04",
+          "title": "選擇服務時的主要考量",
+          "type": "multiple",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "價格",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "品質",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "品牌",
+              "trait_weights": {}
+            },
+            {
+              "id": "O4",
+              "label": "朋友建議",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": 3,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "S05",
+          "title": "請說明您的考量",
+          "type": "short_text",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        }
+      ],
+      "routes": [],
+      "default_next": null
+    }
+  ],
+  "source_url": "",
+  "import_warnings": [],
+  "confirmed": true,
+  "semantic_analysis": {},
+  "consistency_rules": [],
+  "revision": 1
+}

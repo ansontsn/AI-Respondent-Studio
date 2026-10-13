@@ -1,0 +1,652 @@
+{
+  "id": "onlyframe-demo-v1",
+  "title": "ONLYFRAME 功能測試問卷",
+  "description": "供功能測試自訂的範例；不是正式 ONLYFRAME 研究問卷。低、中、高自由度僅為情境示範。",
+  "topic": "ONLYFRAME 客製化小卡框",
+  "audience": "對收藏用品有不同程度興趣的虛擬成年人物",
+  "purpose": "test",
+  "pages": [
+    {
+      "id": "P1",
+      "title": "背景及收藏情境",
+      "questions": [
+        {
+          "id": "Q01",
+          "title": "您的年齡",
+          "type": "short_text",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "基本資料",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "background.age",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q02",
+          "title": "目前主要職業",
+          "type": "short_text",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "background.occupation",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q03",
+          "title": "您目前是否收藏小卡？",
+          "type": "single",
+          "required": true,
+          "options": [
+            {
+              "id": "yes",
+              "label": "有",
+              "trait_weights": {
+                "topic_interest": 1.0
+              }
+            },
+            {
+              "id": "no",
+              "label": "沒有",
+              "trait_weights": {
+                "topic_interest": -1.0,
+                "rationality": 0.35
+              }
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q04",
+          "title": "常使用哪些購物管道？",
+          "type": "multiple",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "品牌官網",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "實體門市",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "社群商店",
+              "trait_weights": {}
+            },
+            {
+              "id": "O4",
+              "label": "網路商城",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": 3,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        }
+      ],
+      "routes": [
+        {
+          "when": {
+            "question_id": "Q03",
+            "operator": "eq",
+            "value": "no"
+          },
+          "target": "P3"
+        }
+      ],
+      "default_next": null
+    },
+    {
+      "id": "P2",
+      "title": "收藏經驗",
+      "questions": [
+        {
+          "id": "Q05",
+          "title": "收藏頻率",
+          "type": "dropdown",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "很少",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "每季",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "每月",
+              "trait_weights": {}
+            },
+            {
+              "id": "O4",
+              "label": "每週",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q06",
+          "title": "小卡框主要購買動機",
+          "type": "multiple",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "保護收藏",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "展示外觀",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "個人風格",
+              "trait_weights": {}
+            },
+            {
+              "id": "O4",
+              "label": "送禮",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": 3,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q07",
+          "title": "我重視小卡框的保護品質",
+          "type": "linear_scale",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "保護功能",
+          "trait": "quality_focus",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        }
+      ],
+      "routes": [],
+      "default_next": null
+    },
+    {
+      "id": "P3",
+      "title": "產品情境與選擇",
+      "questions": [
+        {
+          "id": "Q08",
+          "title": "我重視產品的外觀設計",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "外觀重視",
+          "trait": "aesthetics",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q09",
+          "title": "我會認真比較價格",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "價格敏感",
+          "trait": "price_sensitivity",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q10",
+          "title": "我喜歡具有個人特色的產品",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "客製化偏好",
+          "trait": "personalization",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q11",
+          "title": "我願意支付較高價格購買客製化產品",
+          "type": "likert",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "付費意願",
+          "trait": "willingness_to_pay",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q12",
+          "title": "目前的購買意願",
+          "type": "linear_scale",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "購買意願",
+          "trait": "purchase_intention",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q13",
+          "title": "偏好的客製化方案",
+          "type": "single",
+          "required": true,
+          "options": [
+            {
+              "id": "low",
+              "label": "低自由度：選擇既有樣式",
+              "trait_weights": {
+                "price_sensitivity": 0.8,
+                "rationality": 0.3
+              }
+            },
+            {
+              "id": "mid",
+              "label": "中自由度：調整部分樣式",
+              "trait_weights": {
+                "personalization": 0.4,
+                "aesthetics": 0.4
+              }
+            },
+            {
+              "id": "high",
+              "label": "高自由度：自由組合設計",
+              "trait_weights": {
+                "personalization": 0.9,
+                "openness": 0.4,
+                "price_sensitivity": -0.3
+              }
+            },
+            {
+              "id": "none",
+              "label": "目前沒有需求",
+              "trait_weights": {
+                "topic_interest": -1.0,
+                "price_sensitivity": 0.5
+              }
+            }
+          ],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q14",
+          "title": "選擇高自由度方案的原因",
+          "type": "paragraph",
+          "required": true,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 500,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [
+            {
+              "question_id": "Q13",
+              "operator": "eq",
+              "value": "high"
+            }
+          ],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q15",
+          "title": "各使用情境的偏好",
+          "type": "single_grid",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "不重視",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "普通",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "重視",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [
+            {
+              "id": "O1",
+              "label": "日常展示",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "隨身攜帶",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "送禮",
+              "trait_weights": {}
+            }
+          ],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q16",
+          "title": "各情境需要的功能",
+          "type": "checkbox_grid",
+          "required": true,
+          "options": [
+            {
+              "id": "O1",
+              "label": "保護",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "外觀",
+              "trait_weights": {}
+            },
+            {
+              "id": "O3",
+              "label": "個人化",
+              "trait_weights": {}
+            }
+          ],
+          "rows": [
+            {
+              "id": "O1",
+              "label": "自用",
+              "trait_weights": {}
+            },
+            {
+              "id": "O2",
+              "label": "送禮",
+              "trait_weights": {}
+            }
+          ],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": 2,
+          "max_length": 2000,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        },
+        {
+          "id": "Q17",
+          "title": "其他考量或猶豫",
+          "type": "paragraph",
+          "required": false,
+          "options": [],
+          "rows": [],
+          "scale_min": 1,
+          "scale_max": 5,
+          "min_choices": 0,
+          "max_choices": null,
+          "max_length": 500,
+          "concept": "",
+          "trait": "",
+          "reverse": false,
+          "persona_field": "",
+          "display_if": [],
+          "binding": {
+            "container_selector": "",
+            "title": "",
+            "option_labels": {},
+            "row_selectors": {}
+          },
+          "notes": ""
+        }
+      ],
+      "routes": [],
+      "default_next": null
+    }
+  ],
+  "source_url": "",
+  "import_warnings": [],
+  "confirmed": true,
+  "semantic_analysis": {},
+  "consistency_rules": [],
+  "revision": 1
+}

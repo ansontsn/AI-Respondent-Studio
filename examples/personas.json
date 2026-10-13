@@ -1,0 +1,521 @@
+[
+  {
+    "id": "b69f3502-6759-5006-8344-428ed05e9e4c",
+    "name": "虛擬人物 42",
+    "archetype": "品質導向型",
+    "background": {
+      "age": 58,
+      "gender": "不指定",
+      "occupation": "工程師",
+      "status": "就業",
+      "education": "大學",
+      "monthly_income": 28000.0,
+      "disposable_budget": 4400.0,
+      "lifestyle": "重視規劃且偶爾犒賞自己",
+      "interests": [
+        "運動",
+        "遊戲"
+      ],
+      "situation": "58 歲的工程師，每月可支配預算約 4400 元；重視規劃且偶爾犒賞自己，主要興趣為運動、遊戲。"
+    },
+    "traits": {
+      "price_sensitivity": 0.7327,
+      "quality_focus": 0.9154,
+      "aesthetics": 0.3289,
+      "brand_focus": 0.4907,
+      "risk_tolerance": 0.5993,
+      "impulsiveness": 0.7948,
+      "rationality": 0.46,
+      "social_influence": 0.6002,
+      "personalization": 0.3205,
+      "openness": 0.6913
+    },
+    "behavior": {
+      "purchase_frequency": "很少",
+      "spending_budget": 520.0,
+      "platforms": [
+        "實體門市",
+        "品牌官網"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "需要比較價格"
+      ],
+      "price_attitude": "重視價格，喜歡的商品仍可能等待折扣",
+      "quality_expectation": "重視耐用及可靠性",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.128,
+      "uncertainty": 0.095
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "58 歲的工程師，每月可支配預算約 4400 元；重視規劃且偶爾犒賞自己，主要興趣為運動、遊戲。 重視價格，喜歡的商品仍可能等待折扣；受當下興趣影響，但仍受預算限制。",
+    "seed": 42,
+    "revision": 1
+  },
+  {
+    "id": "de313178-0b07-5569-a100-24bc33a09d78",
+    "name": "虛擬人物 43",
+    "archetype": "低度興趣型",
+    "background": {
+      "age": 20,
+      "gender": "男性",
+      "occupation": "大學生",
+      "status": "學生",
+      "education": "大學在學",
+      "monthly_income": 18000.0,
+      "disposable_budget": 2300.0,
+      "lifestyle": "以興趣為生活重心，控制其他支出",
+      "interests": [
+        "旅行",
+        "運動",
+        "烹飪"
+      ],
+      "situation": "20 歲的大學生，每月可支配預算約 2300 元；以興趣為生活重心，控制其他支出，主要興趣為旅行、運動、烹飪。"
+    },
+    "traits": {
+      "price_sensitivity": 0.965,
+      "quality_focus": 0.4332,
+      "aesthetics": 0.3336,
+      "brand_focus": 0.4022,
+      "risk_tolerance": 0.7635,
+      "impulsiveness": 0.6617,
+      "rationality": 0.5907,
+      "social_influence": 0.1284,
+      "personalization": 0.2919,
+      "openness": 0.7126
+    },
+    "behavior": {
+      "purchase_frequency": "很少",
+      "spending_budget": 250.0,
+      "platforms": [
+        "網路商城",
+        "品牌官網"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "需要比較價格"
+      ],
+      "price_attitude": "重視價格，喜歡的商品仍可能等待折扣",
+      "quality_expectation": "品質達到基本需求即可",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.1012,
+      "uncertainty": 0.268
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "20 歲的大學生，每月可支配預算約 2300 元；以興趣為生活重心，控制其他支出，主要興趣為旅行、運動、烹飪。 重視價格，喜歡的商品仍可能等待折扣；受當下興趣影響，但仍受預算限制。",
+    "seed": 43,
+    "revision": 1
+  },
+  {
+    "id": "a7f905eb-4085-51a9-9f86-a6ce398ab7c1",
+    "name": "虛擬人物 44",
+    "archetype": "高度興趣型",
+    "background": {
+      "age": 44,
+      "gender": "女性",
+      "occupation": "工程師",
+      "status": "就業",
+      "education": "研究所",
+      "monthly_income": 47000.0,
+      "disposable_budget": 7100.0,
+      "lifestyle": "以興趣為生活重心，控制其他支出",
+      "interests": [
+        "科技",
+        "運動"
+      ],
+      "situation": "44 歲的工程師，每月可支配預算約 7100 元；以興趣為生活重心，控制其他支出，主要興趣為科技、運動。"
+    },
+    "traits": {
+      "price_sensitivity": 0.3,
+      "quality_focus": 0.6604,
+      "aesthetics": 0.6463,
+      "brand_focus": 0.5176,
+      "risk_tolerance": 0.6017,
+      "impulsiveness": 0.5878,
+      "rationality": 0.7748,
+      "social_influence": 0.2043,
+      "personalization": 0.795,
+      "openness": 0.5476
+    },
+    "behavior": {
+      "purchase_frequency": "每月",
+      "spending_budget": 2620.0,
+      "platforms": [
+        "網路商城",
+        "社群商店"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "符合實際需求",
+        "使用品質"
+      ],
+      "barriers": [
+        "尚未形成明確需求"
+      ],
+      "price_attitude": "願依使用價值評估價格",
+      "quality_expectation": "重視耐用及可靠性",
+      "decision_style": "比較資訊後決策"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.9633,
+      "uncertainty": 0.139
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "44 歲的工程師，每月可支配預算約 7100 元；以興趣為生活重心，控制其他支出，主要興趣為科技、運動。 願依使用價值評估價格；比較資訊後決策。",
+    "seed": 44,
+    "revision": 1
+  },
+  {
+    "id": "cc9b623b-ca80-52d4-b332-f461ada1f1e4",
+    "name": "虛擬人物 45",
+    "archetype": "高度興趣型",
+    "background": {
+      "age": 35,
+      "gender": "女性",
+      "occupation": "自由工作者",
+      "status": "就業",
+      "education": "大學",
+      "monthly_income": 87000.0,
+      "disposable_budget": 9200.0,
+      "lifestyle": "重視規劃且偶爾犒賞自己",
+      "interests": [
+        "音樂",
+        "運動",
+        "烹飪"
+      ],
+      "situation": "35 歲的自由工作者，每月可支配預算約 9200 元；重視規劃且偶爾犒賞自己，主要興趣為音樂、運動、烹飪。"
+    },
+    "traits": {
+      "price_sensitivity": 0.5813,
+      "quality_focus": 0.5029,
+      "aesthetics": 0.6259,
+      "brand_focus": 0.3742,
+      "risk_tolerance": 0.5741,
+      "impulsiveness": 0.7565,
+      "rationality": 0.5685,
+      "social_influence": 0.5359,
+      "personalization": 0.541,
+      "openness": 0.688
+    },
+    "behavior": {
+      "purchase_frequency": "每月",
+      "spending_budget": 3020.0,
+      "platforms": [
+        "網路商城",
+        "社群商店"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "尚未形成明確需求"
+      ],
+      "price_attitude": "願依使用價值評估價格",
+      "quality_expectation": "品質達到基本需求即可",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.8287,
+      "uncertainty": 0.072
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "35 歲的自由工作者，每月可支配預算約 9200 元；重視規劃且偶爾犒賞自己，主要興趣為音樂、運動、烹飪。 願依使用價值評估價格；受當下興趣影響，但仍受預算限制。",
+    "seed": 45,
+    "revision": 1
+  },
+  {
+    "id": "65f8a8f6-8b13-5e44-9d3c-d67b8f7bcdda",
+    "name": "虛擬人物 46",
+    "archetype": "品質導向型",
+    "background": {
+      "age": 22,
+      "gender": "不指定",
+      "occupation": "大學生",
+      "status": "學生",
+      "education": "大學在學",
+      "monthly_income": 15000.0,
+      "disposable_budget": 4000.0,
+      "lifestyle": "以興趣為生活重心，控制其他支出",
+      "interests": [
+        "遊戲",
+        "閱讀"
+      ],
+      "situation": "22 歲的大學生，每月可支配預算約 4000 元；以興趣為生活重心，控制其他支出，主要興趣為遊戲、閱讀。"
+    },
+    "traits": {
+      "price_sensitivity": 0.7055,
+      "quality_focus": 0.8927,
+      "aesthetics": 0.5566,
+      "brand_focus": 0.4266,
+      "risk_tolerance": 0.5418,
+      "impulsiveness": 0.98,
+      "rationality": 0.1925,
+      "social_influence": 0.2572,
+      "personalization": 0.4159,
+      "openness": 0.7135
+    },
+    "behavior": {
+      "purchase_frequency": "每月",
+      "spending_budget": 1200.0,
+      "platforms": [
+        "實體門市",
+        "社群商店"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "需要比較價格"
+      ],
+      "price_attitude": "重視價格，喜歡的商品仍可能等待折扣",
+      "quality_expectation": "重視耐用及可靠性",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.7333,
+      "uncertainty": 0.157
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "22 歲的大學生，每月可支配預算約 4000 元；以興趣為生活重心，控制其他支出，主要興趣為遊戲、閱讀。 重視價格，喜歡的商品仍可能等待折扣；受當下興趣影響，但仍受預算限制。",
+    "seed": 46,
+    "revision": 1
+  },
+  {
+    "id": "7da1e314-c25f-5344-969d-68313b6a2e5a",
+    "name": "虛擬人物 47",
+    "archetype": "低度興趣型",
+    "background": {
+      "age": 40,
+      "gender": "女性",
+      "occupation": "工程師",
+      "status": "就業",
+      "education": "研究所",
+      "monthly_income": 80000.0,
+      "disposable_budget": 21000.0,
+      "lifestyle": "以興趣為生活重心，控制其他支出",
+      "interests": [
+        "遊戲",
+        "收藏",
+        "投資學習"
+      ],
+      "situation": "40 歲的工程師，每月可支配預算約 21000 元；以興趣為生活重心，控制其他支出，主要興趣為遊戲、收藏、投資學習。"
+    },
+    "traits": {
+      "price_sensitivity": 0.4478,
+      "quality_focus": 0.7986,
+      "aesthetics": 0.471,
+      "brand_focus": 0.4261,
+      "risk_tolerance": 0.6769,
+      "impulsiveness": 0.5166,
+      "rationality": 0.4862,
+      "social_influence": 0.8593,
+      "personalization": 0.323,
+      "openness": 0.61
+    },
+    "behavior": {
+      "purchase_frequency": "很少",
+      "spending_budget": 2020.0,
+      "platforms": [
+        "品牌官網",
+        "社群商店"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "尚未形成明確需求"
+      ],
+      "price_attitude": "願依使用價值評估價格",
+      "quality_expectation": "重視耐用及可靠性",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.0541,
+      "uncertainty": 0.12
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "40 歲的工程師，每月可支配預算約 21000 元；以興趣為生活重心，控制其他支出，主要興趣為遊戲、收藏、投資學習。 願依使用價值評估價格；受當下興趣影響，但仍受預算限制。",
+    "seed": 47,
+    "revision": 1
+  },
+  {
+    "id": "c088d17a-8891-525c-b82e-50ee9b0e76bd",
+    "name": "虛擬人物 48",
+    "archetype": "價格敏感型",
+    "background": {
+      "age": 53,
+      "gender": "男性",
+      "occupation": "教師",
+      "status": "就業",
+      "education": "大學",
+      "monthly_income": 41000.0,
+      "disposable_budget": 13700.0,
+      "lifestyle": "重視規劃且偶爾犒賞自己",
+      "interests": [
+        "科技",
+        "收藏",
+        "閱讀",
+        "運動"
+      ],
+      "situation": "53 歲的教師，每月可支配預算約 13700 元；重視規劃且偶爾犒賞自己，主要興趣為科技、收藏、閱讀、運動。"
+    },
+    "traits": {
+      "price_sensitivity": 0.8281,
+      "quality_focus": 0.2847,
+      "aesthetics": 0.5067,
+      "brand_focus": 0.5327,
+      "risk_tolerance": 0.3202,
+      "impulsiveness": 0.3976,
+      "rationality": 0.1604,
+      "social_influence": 0.4885,
+      "personalization": 0.4836,
+      "openness": 0.6099
+    },
+    "behavior": {
+      "purchase_frequency": "每月",
+      "spending_budget": 4440.0,
+      "platforms": [
+        "社群商店",
+        "實體門市"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "需要比較價格"
+      ],
+      "price_attitude": "重視價格，喜歡的商品仍可能等待折扣",
+      "quality_expectation": "品質達到基本需求即可",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.8131,
+      "uncertainty": 0.139
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "53 歲的教師，每月可支配預算約 13700 元；重視規劃且偶爾犒賞自己，主要興趣為科技、收藏、閱讀、運動。 重視價格，喜歡的商品仍可能等待折扣；受當下興趣影響，但仍受預算限制。",
+    "seed": 48,
+    "revision": 1
+  },
+  {
+    "id": "75c0fea5-9da7-5f92-90eb-b4749d40f363",
+    "name": "虛擬人物 49",
+    "archetype": "價格敏感型",
+    "background": {
+      "age": 22,
+      "gender": "女性",
+      "occupation": "大學生",
+      "status": "學生",
+      "education": "大學在學",
+      "monthly_income": 20000.0,
+      "disposable_budget": 2300.0,
+      "lifestyle": "喜歡探索但會比較價格",
+      "interests": [
+        "遊戲",
+        "音樂",
+        "投資學習",
+        "收藏"
+      ],
+      "situation": "22 歲的大學生，每月可支配預算約 2300 元；喜歡探索但會比較價格，主要興趣為遊戲、音樂、投資學習、收藏。"
+    },
+    "traits": {
+      "price_sensitivity": 0.8141,
+      "quality_focus": 0.6314,
+      "aesthetics": 0.2534,
+      "brand_focus": 0.2512,
+      "risk_tolerance": 0.3012,
+      "impulsiveness": 0.3156,
+      "rationality": 0.4808,
+      "social_influence": 0.02,
+      "personalization": 0.4931,
+      "openness": 0.4415
+    },
+    "behavior": {
+      "purchase_frequency": "很少",
+      "spending_budget": 330.0,
+      "platforms": [
+        "社群商店",
+        "品牌官網"
+      ],
+      "usage_habits": "先評估日常使用情境，再決定是否購買",
+      "motivations": [
+        "興趣與新鮮感",
+        "個人風格"
+      ],
+      "barriers": [
+        "需要比較價格"
+      ],
+      "price_attitude": "重視價格，喜歡的商品仍可能等待折扣",
+      "quality_expectation": "重視耐用及可靠性",
+      "decision_style": "受當下興趣影響，但仍受預算限制"
+    },
+    "topic_attributes": {
+      "topic": "一般消費與生活",
+      "topic_interest": 0.2119,
+      "uncertainty": 0.067
+    },
+    "core_values": [
+      "符合生活情境",
+      "保留預算彈性",
+      "興趣與實用取得平衡"
+    ],
+    "narrative": "22 歲的大學生，每月可支配預算約 2300 元；喜歡探索但會比較價格，主要興趣為遊戲、音樂、投資學習、收藏。 重視價格，喜歡的商品仍可能等待折扣；受當下興趣影響，但仍受預算限制。",
+    "seed": 49,
+    "revision": 1
+  }
+]

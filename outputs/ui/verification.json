@@ -1,0 +1,42 @@
+{
+  "pages": [
+    {
+      "page": "儀表板",
+      "status": "passed"
+    },
+    {
+      "page": "AI 模型設定",
+      "status": "passed"
+    },
+    {
+      "page": "問卷管理",
+      "status": "passed"
+    },
+    {
+      "page": "虛擬人物管理",
+      "status": "passed"
+    },
+    {
+      "page": "AI 模擬控制台",
+      "status": "passed"
+    },
+    {
+      "page": "回答檢查",
+      "status": "passed"
+    },
+    {
+      "page": "自動填表測試",
+      "status": "passed"
+    },
+    {
+      "page": "結果分析",
+      "status": "passed"
+    },
+    {
+      "page": "系統設定",
+      "status": "passed"
+    }
+  ],
+  "javascript_errors": [],
+  "tablet_viewport": "1024x768"
+}

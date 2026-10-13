@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+data/
+logs/
+artifacts/
+.tmp/
+*.pyc
+outputs/*.zip
+outputs/source-package.json
