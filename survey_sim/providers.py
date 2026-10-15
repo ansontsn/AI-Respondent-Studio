@@ -13,6 +13,7 @@ import httpx
 from .errors import ProviderError
 from .models import ProviderConfig, now, uid
 from .security import clean_url, register_secret
+from .tls import create_tls_context, certificate_failure
 
 logger = logging.getLogger(__name__)
 DEFAULT_URLS = {"openai": "https://api.openai.com/v1", "deepseek": "https://api.deepseek.com",
@@ -42,9 +43,9 @@ def parse_json(text: str) -> dict:
     try:
         data = json.loads(text, parse_constant=lambda x: (_ for _ in ()).throw(ValueError(x)))
     except (ValueError, TypeError) as exc:
-        raise ProviderError("AI 回傳不是合法 JSON；可降低溫度、增加輸出 Token 或啟用 JSON 模式後重試。") from exc
+        raise ProviderError("AI 回傳不是合法 JSON；可降低溫度、增加輸出 Token 或啟用 JSON 模式後重試。", kind="format") from exc
     if not isinstance(data, dict):
-        raise ProviderError("AI 回傳 JSON 頂層必須為物件。")
+        raise ProviderError("AI 回傳 JSON 頂層必須為物件。", kind="format")
     return data
 
 
@@ -55,6 +56,7 @@ class HTTPProvider:
         self.config, self.key, self.usage, self.transport = config, register_secret(key), usage, transport
         self._request_lock = threading.Lock()
         self._last_request = 0.
+        self.before_request = None
         if config.provider not in {"ollama", "compatible"} and not key:
             raise ProviderError("尚未設定 API Key。可先選擇 Mock 模式，或在 AI 模型設定輸入金鑰。")
         raw = config.base_url or DEFAULT_URLS.get(config.provider, "")
@@ -118,23 +120,26 @@ class HTTPProvider:
             if p in {"openai", "deepseek", "compatible"}:
                 choice = data["choices"][0]
                 if choice.get("finish_reason") == "length":
-                    raise ProviderError("AI 輸出被 Token 上限截斷；請增加最大輸出 Token。")
+                    raise ProviderError("AI 輸出被 Token 上限截斷；請增加最大輸出 Token。", kind="truncated")
                 usage = data.get("usage", {})
                 return choice["message"]["content"], usage.get("prompt_tokens"), usage.get("completion_tokens")
             if p == "anthropic":
                 if data.get("stop_reason") == "max_tokens":
-                    raise ProviderError("Claude 輸出被 Token 上限截斷。")
+                    raise ProviderError("Claude 輸出被 Token 上限截斷；請增加最大輸出 Token。", kind="truncated")
                 usage = data.get("usage", {})
                 return "".join(x["text"] for x in data["content"] if x["type"] == "text"), usage.get("input_tokens"), usage.get("output_tokens")
             if p == "gemini":
                 candidate = data["candidates"][0]
+                if candidate.get("finishReason") == "MAX_TOKENS":
+                    raise ProviderError("Gemini 輸出被 Token 上限截斷；請增加最大輸出 Token。", kind="truncated")
                 if candidate.get("finishReason") not in {None, "STOP"}:
-                    raise ProviderError("Gemini 未正常完成輸出（可能截斷或被內容規則阻擋）。")
+                    # Specific to this request's content, not a service-wide failure.
+                    raise ProviderError("Gemini 未正常完成輸出（可能被內容規則阻擋）。", kind="content")
                 usage = data.get("usageMetadata", {})
                 return "".join(x.get("text", "") for x in candidate["content"]["parts"] if not x.get("thought")), usage.get("promptTokenCount"), usage.get("candidatesTokenCount")
             return data["message"]["content"], data.get("prompt_eval_count"), data.get("eval_count")
         except (KeyError, IndexError, TypeError) as exc:
-            raise ProviderError("AI 服務回傳缺少文字或必要欄位；請確認模型及 API 格式。") from exc
+            raise ProviderError("AI 服務回傳缺少文字或必要欄位；請確認模型及 API 格式。", kind="format") from exc
 
     def report(self, operation: str, start: float, status: str, inp=None, out=None):
         if self.usage:
@@ -149,6 +154,8 @@ class HTTPProvider:
     def generate(self, operation: str, payload: dict, system: str) -> Completion:
         url, headers, body = self.request(system, payload)
         for attempt in range(self.config.retries + 1):
+            if self.before_request:
+                self.before_request(operation, payload, system)
             with self._request_lock:
                 wait = self.config.request_interval - (time.monotonic() - self._last_request)
                 if wait > 0:
@@ -159,7 +166,7 @@ class HTTPProvider:
             reported = False
             retry_wait = min(2 ** attempt, 30)
             try:
-                with httpx.Client(timeout=self.config.timeout, transport=self.transport, follow_redirects=False) as client:
+                with httpx.Client(timeout=self.config.timeout, transport=self.transport, follow_redirects=False, verify=create_tls_context()) as client:
                     response = client.post(url, headers=headers, json=body)
                 if response.status_code >= 400:
                     status = response.status_code
@@ -200,9 +207,14 @@ class HTTPProvider:
                 return Completion(parsed, inp, out)
             except httpx.TransportError as exc:
                 logger.warning("AI transport failure: %s (attempt %s)", type(exc).__name__, attempt + 1)
+                if certificate_failure(exc):
+                    self.report(operation, start, "tls_error")
+                    raise ProviderError("HTTPS 憑證驗證失敗，尚未完成 API 認證。程式已使用系統受信任憑證；請檢查 Windows 憑證或自訂 CA 設定，不需增加 Timeout。") from exc
                 self.report(operation, start, "transport_error")
                 if attempt == self.config.retries:
-                    raise ProviderError("AI 連線逾時或無法連線，已保留完成進度。請檢查網路及 Base URL。") from exc
+                    if isinstance(exc, httpx.TimeoutException):
+                        raise ProviderError(f"AI 請求逾時（目前 Timeout {self.config.timeout:g} 秒），已保留完成進度。請稍後重試，或在進階模式提高 Timeout。") from exc
+                    raise ProviderError("無法建立或維持 AI 連線，已保留完成進度。請檢查網路、Base URL 及代理設定。") from exc
             except (ValueError, ProviderError) as exc:
                 if not reported:
                     self.report(operation, start, "invalid_response", inp, out)

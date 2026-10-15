@@ -7,22 +7,29 @@ import streamlit as st
 
 from .automation import FormAutomation
 from .models import TaskSpec, FormTarget
-from .security import clean_url
+from .security import clean_form_url
 from .ui import guarded, select_entity, record_table
 from .ui_people import active_provider
 
 STATUSES = {"ready": "待執行", "running": "執行中", "paused": "已暫停", "stopped": "已停止", "failed": "失敗",
             "completed": "已完成", "completed_with_errors": "完成但有錯誤", "pending": "待執行", "invalid": "回答需修正",
             "passed": "通過", "review": "需要人工檢查", "error": "明確錯誤", "success": "已確認成功", "unknown": "提交狀態不明", "dry_run": "僅填寫預覽"}
+STATUSES.update({"budget_paused": "預算限制暫停", "cancelled": "已取消", "provider_paused": "AI 服務錯誤暫停"})
+STATUSES["blocked"]="提交被阻擋；未送出"
+STATUSES["skipped"] = "已略過"
 
 
 @st.fragment(run_every="2s")
 def progress_view(rt, task_id):
     task = rt.db.task(task_id)
-    items = rt.db.rows("SELECT persona_id,status,attempts,error FROM task_items WHERE task_id=?", (task_id,))
-    completed = sum(x["status"] in {"completed", "invalid", "failed"} for x in items)
+    items = rt.db.rows("SELECT persona_id,status,attempts,error,checkpoint FROM task_items WHERE task_id=?", (task_id,))
+    # Every item that will not run again counts as processed (skipped / unknown included).
+    completed = sum(x["status"] not in {"pending", "running"} for x in items)
     st.progress(completed / len(items) if items else 0., text=f"{STATUSES.get(task['status'],task['status'])} · {completed} / {len(items)}")
-    frame = pd.DataFrame(items)
+    phases = {"pre_survey": "填寫前段問卷", "website": "網站設計", "post_survey": "接續體驗題", "form_finish": "核對問卷提交", "completed": "已完成"}
+    display_items = [{**{k:v for k,v in item.items() if k != "checkpoint"},
+                      "目前階段": phases.get(json.loads(item["checkpoint"]).get("phase"), "")} for item in items]
+    frame = pd.DataFrame(display_items)
     if not frame.empty:
         frame["status"] = frame["status"].map(lambda v: STATUSES.get(v, v))
     st.dataframe(frame.rename(columns={"persona_id": "人物 ID", "status": "狀態", "attempts": "嘗試次數", "error": "失敗原因"}), hide_index=True, width="stretch")
@@ -39,18 +46,31 @@ def console_page(rt):
     ids = st.multiselect("選擇人物", list(labels), default=list(labels), format_func=labels.get)
     if ids:
         st.dataframe(pd.DataFrame([{"人物": p.name, "類型": p.archetype, "職業": p.background.occupation,
-                                  "預算": p.behavior.spending_budget} for p in people if p.id in ids]), hide_index=True)
+                                  "預算": p.behavior.spending_budget, "固定方案": p.onlyframe_tier or "未指定"} for p in people if p.id in ids]), hide_index=True)
     a, b, d = st.columns(3)
     mode = a.selectbox("回答模式", ["consistent", "natural", "custom"], index=1,
         format_func=lambda v: {"consistent": "高一致性", "natural": "自然變動", "custom": "自訂"}[v])
     seed = b.number_input("答題 Random Seed", min_value=0, max_value=2_000_000_000, value=42)
     interval = d.number_input("人物請求間隔（秒）", min_value=0., max_value=300., value=1.)
     variability = st.slider("自訂回答變動程度", 0., .5, .15, step=.01, disabled=mode != "custom")
+    from .ui_staged_survey import survey_options, prepare_survey_form
+    website_parameters, website_error = survey_options(rt, q, "console_survey")
+    budget = None
+    if st.checkbox("設定本次任務預算上限"):
+        budget = st.number_input("費用上限（" + (c.rate_currency if c else "模型幣別") + "）", min_value=0., value=10.)
+    if q and c and ids:
+        from .costs import task_estimate
+        estimate = task_estimate(TaskSpec(questionnaire=q, personas=[p for p in people if p.id in ids], provider=c))
+        if estimate["high"] is None:
+            st.caption(estimate["method"])
+        else:
+            st.caption(f"任務規劃費用：約 {estimate['low']:.6f}–{estimate['high']:.6f} {estimate['currency']}；{estimate['method']}")
     st.caption("一次執行一個批次；遇到 429 / 5xx 採有限退避重試。暫停及停止在當前請求完成、頁面保存後生效。")
-    if st.button("建立批次任務", type="primary", disabled=not(q and c and ids)):
+    if st.button("建立批次任務", type="primary", disabled=not(q and c and ids) or bool(website_error)):
         def create():
             spec = TaskSpec(questionnaire=q, personas=[p for p in people if p.id in ids], provider=c, mode=mode,
-                            seed=seed, interval_seconds=interval, variability=variability)
+                            seed=seed, interval_seconds=interval, variability=variability, budget_limit=budget,
+                            **prepare_survey_form(rt, dict(website_parameters)))
             id = rt.db.create_task(spec)
             st.session_state["latest_task"] = id
             st.success("任務已建立，人物及設定已保存。按下開始執行。")
@@ -74,6 +94,9 @@ def console_page(rt):
     if columns[4].button("更新狀態"):
         st.rerun()
     progress_view(rt, task_id)
+    with st.expander("即時 API 用量與預算控制"):
+        from .ui_v2_analysis import budget_controls
+        budget_controls(rt, task_id)
     with st.expander("任務設定快照"):
         st.json(json.loads(rt.db.task(task_id)["spec"]))
 
@@ -116,15 +139,17 @@ def automation_page(rt):
             submit_text = st.text_input("提交按鈕文字", t.submit_text)
             if st.form_submit_button("保存測試表單"):
                 def save_target():
-                    saved = FormTarget(id=t.id, name=name, url=clean_url(url), questionnaire_id=response.questionnaire_id, kind=kind,
+                    saved = FormTarget(id=t.id, name=name, url=clean_form_url(url), questionnaire_id=response.questionnaire_id, kind=kind,
                         authorized=authorized, success_selector=success_selector, success_text=success_text, next_text=next_text, submit_text=submit_text)
                     rt.db.save("target", saved)
                     st.success("設定已保存。外部網址需另加入下方允許清單。")
+                    if url.strip() != saved.url:
+                        st.info("已移除分享參數並統一網址：" + saved.url)
                 guarded(save_target)
     allowlist = st.text_area("URL Allowlist（每行一個完整網址，精確比對）", "\n".join(rt.setting("url_allowlist", [])))
     if st.button("保存允許清單"):
         def save_allowlist():
-            allowed = [clean_url(line.strip()) for line in allowlist.splitlines() if line.strip()]
+            allowed = [clean_form_url(line.strip()) for line in allowlist.splitlines() if line.strip()]
             rt.set_setting("url_allowlist", allowed)
             st.success("允許清單已保存。")
         guarded(save_allowlist)
@@ -156,5 +181,5 @@ def automation_page(rt):
             resolution = st.selectbox("在表單接收端查證的結果", ["success", "failed"], format_func=lambda v: "已確認收到（保留禁止重複）" if v == "success" else "已確認未收到（允許重新測試）")
             checked = st.checkbox("我已查閱接收端紀錄，確認上述結果")
             if st.button("保存人工查證", disabled=not checked):
-                rt.db.finish_submission(selected_id, resolution, "使用者已人工查證接收端狀態")
-                st.success("查證結果已保存。")
+                if guarded(lambda: rt.db.resolve_submission(selected_id, resolution) or True):
+                    st.success("查證結果已保存。" + ("未收到的回答可在批次按「重新執行失敗項目」再填表。" if resolution == "failed" else ""))

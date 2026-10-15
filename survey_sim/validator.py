@@ -11,7 +11,17 @@ def visible(q: Question, values: dict) -> bool:
     return all(condition.matches(values) for condition in q.display_if)
 
 
-def value_errors(q: Question, value: Any) -> list[str]:
+def value_errors(q: Question, value: Any, other_text: str = "") -> list[str]:
+    other = next((o for o in q.options if o.is_other), None)
+    selected_other = other is not None and (other.id in value if isinstance(value, list) else value == other.id)
+    if not isinstance(other_text, str):
+        return ["其他補充文字需為字串"]
+    if selected_other and not other_text.strip():
+        return ["勾選『其他』時需填寫補充文字"]
+    if other_text and not selected_other:
+        return ["未勾選『其他』，不可附帶其他補充文字"]
+    if len(other_text) > q.max_length:
+        return ["其他補充文字超過字數上限"]
     if value is None or value == "" or value == [] or value == {}:
         return ["必填題沒有答案"] if q.required else []
     opts = {x.id for x in q.options}
@@ -50,6 +60,15 @@ def value_errors(q: Question, value: Any) -> list[str]:
     return ["此特殊題型尚未支援，請人工修正問卷"]
 
 
+def submittable(status, issues) -> bool:
+    """May be sent to an authorized test form: passed, or only reminders that do not
+    concern a specific answer (AI uncertainty, persona-level budget notes)."""
+    if status == "passed":
+        return True
+    return status == "review" and bool(issues) and all(
+        i.code == "uncertainty" or i.question_id == "PERSONA" for i in issues)
+
+
 class AnswerValidator:
     def validate(self, questionnaire: Questionnaire, persona: Persona, answers: list[Answer]):
         issues: list[Issue] = []
@@ -73,12 +92,14 @@ class AnswerValidator:
                     if q.required:
                         issues.append(Issue(question_id=q.id, level="error", code="missing", message="缺少必填題"))
                     continue
-                for error in value_errors(q, a.value):
+                for error in value_errors(q, a.value, a.other_text):
                     issues.append(Issue(question_id=q.id, level="error", code="format", message=error))
                 if a.value is not None:
                     values[q.id] = a.value
                 if a.value is not None and not a.rationale.strip():
                     issues.append(Issue(question_id=q.id, level="review", code="reason", message="缺少簡短決策依據"))
+                if a.uncertain:
+                    issues.append(Issue(question_id=q.id, level="review", code="uncertainty", message="AI 標記答案不確定，需核對理由與人物背景"))
                 if q.persona_field and a.value is not None:
                     actual = field_value(persona, q.persona_field)
                     if actual is not None and q.type in {QuestionType.SHORT, QuestionType.PARAGRAPH} and str(actual) != a.value:

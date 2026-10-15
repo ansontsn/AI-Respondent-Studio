@@ -33,7 +33,27 @@ def save_revision(rt, q, data):
 
 
 def questionnaires_page(rt):
-    tab1, tab2 = st.tabs(["問卷清單與編輯", "匯入與建立"])
+    tab1, tab2, tab3 = st.tabs(["問卷清單與編輯", "匯入與建立", "預覽與確認"])
+    with tab3:
+        from .questionnaire_review import preview, review_report, confirm_questionnaire
+        selected_q = select_entity("核對問卷", rt.db.list("questionnaire"), key="review_q")
+        if selected_q:
+            report = review_report(selected_q)
+            for col, (label, field) in zip(st.columns(4), [("頁面", "pages"), ("題目", "questions"), ("必填", "required"), ("分流", "routes")]):
+                col.metric(label, report[field])
+            for warning in report["warnings"]:
+                st.warning(warning)
+            if report["diagnostics"]:
+                with st.expander("解析狀態與待處理分流"):
+                    st.json(report["diagnostics"])
+            preview(selected_q, "q_review")
+            checks = [st.checkbox(label, key=f"confirm_{selected_q.id}_{selected_q.revision}_{i}") for i, label in enumerate([
+                "題目文字及選項已逐一核對", "所有頁面與題型已補齊", "必填、跳題及分流規則已確認", "解析警告已人工處理，並確認用途為模擬 / 測試"])]
+            if st.button("保存問卷確認", type="primary"):
+                updated = guarded(lambda: confirm_questionnaire(selected_q, all(checks)))
+                if updated:
+                    rt.db.save("questionnaire", updated)
+                    st.success("此版本已確認，可以預覽回答及建立批次。")
     with tab2:
         with st.form("new_questionnaire"):
             title = st.text_input("新問卷名稱", "我的測試問卷")
@@ -58,7 +78,7 @@ def questionnaires_page(rt):
             guarded(do_import)
         st.subheader("Google Forms 公開網址")
         url = st.text_input("公開表單 URL")
-        st.caption("漸進式公開 DOM 匯入：目前頁面可辨識的題目會存為草稿，後續頁面、分流及特殊題型需補齊；不會略過解析警告。")
+        st.caption("先讀取公開頁面可辨識的問卷資料；若結構不相容，退回目前頁面的 DOM 草稿。頁面、分流及特殊限制會標示待核對，請在預覽與確認頁逐項檢查。")
         if st.button("讀取公開表單", disabled=not url):
             q = guarded(lambda: import_google(url))
             if q:
@@ -98,6 +118,8 @@ def questionnaires_page(rt):
                 kind = st.selectbox("題型", list(TYPES), index=list(TYPES).index(item.type), format_func=TYPES.get)
                 required = st.checkbox("必填", value=item.required)
                 options = st.text_area("選項（每行 ID|選項文字；也可只填文字）", "\n".join(f"{o.id}|{o.label}" for o in item.options))
+                other_option_id = st.text_input("其他文字選項 ID（單選 / 多選；留空表示沒有）", next((o.id for o in item.options if o.is_other), ""))
+                st.caption("指定的選項被勾選時，會另存補充文字；ID 必須與上方選項一致。")
                 rows = st.text_area("方格列（每行 ID|列文字）", "\n".join(f"{o.id}|{o.label}" for o in item.rows))
                 a, b, c = st.columns(3)
                 minimum = a.number_input("量表下界", value=item.scale_min, step=1)
@@ -113,7 +135,12 @@ def questionnaires_page(rt):
                 st.caption('例如：[{"question_id":"Q03","operator":"eq","value":"yes"}]。可在下方用選單新增條件。')
                 if st.form_submit_button("儲存題目"):
                     def save_question():
-                        edited = Question(id=qid, title=title, type=kind, required=required, options=options_from_text(options),
+                        parsed_options = options_from_text(options)
+                        if other_option_id.strip() and other_option_id.strip() not in {o.id for o in parsed_options}:
+                            raise AppError("其他文字選項 ID 不在選項清單中。")
+                        for option in parsed_options:
+                            option.is_other = option.id == other_option_id.strip()
+                        edited = Question(id=qid, title=title, type=kind, required=required, options=parsed_options,
                             rows=options_from_text(rows), scale_min=minimum, scale_max=maximum, max_choices=max_choices or None,
                             min_choices=min_choices, max_length=max_length, concept=concept, trait=trait, reverse=reverse,
                             persona_field=persona_field, display_if=json.loads(display_if), binding=item.binding,
@@ -206,6 +233,15 @@ def questionnaires_page(rt):
                     st.success("分析已保存為建議；請核對概念及反向題後手動編輯。")
                     st.json(data)
             st.json(q.semantic_analysis)
+            if q.semantic_analysis.get("questions"):
+                st.caption("套用後，題目的測量概念、反向題及關聯人格屬性會用於人設一致性檢查；會建立新版本並需重新確認問卷。")
+                if st.button("套用 AI 建議到題目"):
+                    def apply_suggestions():
+                        from .questionnaire_review import apply_semantic_analysis
+                        data, changed = apply_semantic_analysis(q)
+                        save_revision(rt, q, data)
+                        st.success(f"已套用到 {changed} 題；請逐題核對後重新確認問卷。")
+                    guarded(apply_suggestions)
         with st.expander("完整 JSON 編輯（排序、刪除分流、跨題一致性規則）"):
             text = st.text_area("完整問卷結構", q.model_dump_json(indent=2), height=440, key=f"qjson_{q.id}_{q.revision}")
             if st.button("儲存完整 JSON"):

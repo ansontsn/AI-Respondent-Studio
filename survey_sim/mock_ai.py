@@ -22,7 +22,7 @@ def field_value(persona: Persona, path: str):
     return value
 
 
-def answer_question(persona: Persona, q: Question, seed: int, mode: str, variability: float):
+def answer_question(persona: Persona, q: Question, seed: int, mode: str, variability: float, scenario=None):
     digest = hashlib.sha256(f"{seed}:{persona.id}:{q.id}".encode()).digest()
     rng = random.Random(int.from_bytes(digest[:8], "big"))
     traits = persona.traits.model_dump()
@@ -33,6 +33,13 @@ def answer_question(persona: Persona, q: Question, seed: int, mode: str, variabi
     if trait in {"purchase_intention", "willingness_to_pay"} or (not q.trait and any(x in q.title for x in ["購買意願", "願意支付", "願意購買"])):
         affordability = min(1, persona.behavior.spending_budget / 2500)
         signal = .48 * interest + .17 * traits["quality_focus"] + .2 * affordability + .15 * traits["personalization"] - .18 * traits["price_sensitivity"]
+        if scenario:
+            attributes = scenario.get("attributes", {})
+            customization = float(attributes.get("customization", .5))
+            price = float(attributes.get("price", 0))
+            signal += .2 * (customization - .5) * traits["personalization"]
+            if price > 0:
+                signal -= .25 * min(2, price / max(1, persona.behavior.spending_budget)) * traits["price_sensitivity"]
     else:
         signal = traits.get(trait, .6 * interest + .25 * traits["openness"] + .15 * traits["rationality"])
     noise = .02 if mode == "consistent" else .13 if mode == "natural" else variability
@@ -82,7 +89,12 @@ def answer_question(persona: Persona, q: Question, seed: int, mode: str, variabi
         value = None
     if trait in {"purchase_intention", "willingness_to_pay"}:
         reason = f"主題興趣約 {interest:.0%}，預算 {persona.behavior.spending_budget:.0f} 元；喜歡個人化與願意支付高價是不同考量。"
-    return {"question_id": q.id, "value": value, "rationale": reason}
+    if scenario:
+        reason += f" 此次情境為『{scenario['name']}』。"
+    other = next((o for o in q.options if o.is_other), None)
+    selected_other = other and (other.id in value if isinstance(value, list) else value == other.id)
+    other_text = f"測試補充：{persona.background.interests[0] if persona.background.interests else '個人收藏需求'}"[:q.max_length] if selected_other else ""
+    return {"question_id": q.id, "value": value, "other_text": other_text, "rationale": reason}
 
 
 class MockProvider:
@@ -96,11 +108,20 @@ class MockProvider:
         if operation == "background":
             return Completion(mock_background(payload["seed"]).model_dump())
         if operation == "persona":
-            return Completion(mock_persona(Background.model_validate(payload["background"]), payload["seed"], payload["archetype"], payload["topic"], payload.get("custom", "")).model_dump())
+            return Completion(mock_persona(Background.model_validate(payload["background"]), payload["seed"], payload["archetype"], payload["topic"], payload.get("custom", ""), payload.get("trait_overrides")).model_dump())
+        if operation == "choose_website_tier":
+            p = Persona.model_validate(payload["persona"])
+            preference = p.traits.personalization
+            tier = "BASIC" if preference < .4 else "CUSTOM" if preference < .7 else "PREMIUM"
+            return Completion({"tier": tier, "reason": f"Mock 功能測試依人物個人化偏好 {preference:.0%} 選定 {tier}；尚未操作網站。"})
         if operation in {"answer_page", "repair_page"}:
             persona = Persona.model_validate(payload["persona"])
-            return Completion({"answers": [answer_question(persona, Question.model_validate(q), payload["seed"], payload["mode"], payload["variability"]) for q in payload["page"]["questions"]]})
+            return Completion({"answers": [answer_question(persona, Question.model_validate(q), payload["seed"], payload["mode"], payload["variability"], payload.get("scenario")) for q in payload["page"]["questions"]]})
         if operation == "analyze":
             return Completion({"topic": payload["questionnaire"]["topic"], "audience": payload["questionnaire"]["audience"],
                 "summary": "Mock 依題目註記整理；請自行確認測量概念與反向題。", "questions": [{"id": q["id"], "concept": q.get("concept", ""), "reverse": q.get("reverse", False), "trait": q.get("trait", "")} for p in payload["questionnaire"]["pages"] for q in p["questions"]]})
+        if operation == "classify_motivations":
+            from .motivations import CATEGORIES
+            return Completion({"items": [{"response_id": r["response_id"], "question_id": r["question_id"],
+                "categories": [label for label, words in CATEGORIES.items() if any(w in r["text"] for w in words)] or ["其他"]} for r in payload["items"]]})
         raise ValueError(f"Unsupported mock operation: {operation}")

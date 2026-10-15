@@ -11,10 +11,21 @@ from .security import redact
 from .personas import similarity
 
 
-def display_answer(q, value):
+def canonical(value):
+    """Order-insensitive form of an answer value, for comparing answers."""
+    if isinstance(value, list):
+        return sorted(value)
+    if isinstance(value, dict):
+        return {k: canonical(v) for k, v in value.items()}
+    return value
+
+
+def display_answer(q, value, other_text=""):
     if value is None:
         return ""
     options = {o.id: o.label for o in q.options}
+    if other_text:
+        options.update({o.id: f"{o.label}：{other_text}" for o in q.options if o.is_other})
     if isinstance(value, list):
         return "、".join(options.get(v, str(v)) for v in value)
     if isinstance(value, dict):
@@ -55,12 +66,15 @@ def tables(db, task_id=None):
         row = {"response_id": r.id, "task_id": r.task_id, "persona_id": r.persona_id, "questionnaire_id": r.questionnaire_id,
                "questionnaire_revision": r.questionnaire_snapshot.revision, "persona_revision": r.persona_snapshot.revision,
                "provider": r.provider_snapshot.provider, "model": r.provider_snapshot.model, "mode": r.mode, "status": r.status}
+        row.update(scenario_id=r.scenario.id if r.scenario else None, scenario_name=r.scenario.name if r.scenario else None,
+                   elapsed_seconds=r.elapsed_seconds, supersedes_id=r.supersedes_id)
         row.update({a.question_id: a.value for a in r.answers})
+        row.update({f"{a.question_id}__other_text": a.other_text for a in r.answers if any(o.is_other for o in qm[a.question_id].options)})
         wide.append(row)
         for a in r.answers:
             details.append({"response_id": r.id, "task_id": r.task_id, "persona_id": r.persona_id, "question_id": a.question_id,
-                "title": qm[a.question_id].title, "value": a.value, "answer_text": display_answer(qm[a.question_id], a.value),
-                "rationale": a.rationale, "valid": a.valid, "validation": a.validation})
+                "title": qm[a.question_id].title, "value": a.value, "other_text": a.other_text, "answer_text": display_answer(qm[a.question_id], a.value, a.other_text),
+                "rationale": a.rationale, "uncertain": a.uncertain, "valid": a.valid, "validation": a.validation})
             schema_key = (r.questionnaire_id, r.questionnaire_snapshot.revision, a.question_id)
             if schema_key not in schema_seen:
                 schema_seen.add(schema_key)
@@ -86,6 +100,19 @@ def tables(db, task_id=None):
              columns=["response_id", "persona_id", "task_id", "question_id", "level", "code", "message", "resolution"]),
         "題目對照": pd.DataFrame(questions), "API用量": pd.DataFrame(db.rows("SELECT * FROM usage" + (" WHERE task_id=?" if task_id else ""), (task_id,) if task_id else ())),
         "提交紀錄": pd.DataFrame(db.rows("SELECT s.* FROM submissions s JOIN responses r ON s.response_id=r.id WHERE r.task_id=?", (task_id,)) if task_id else db.rows("SELECT * FROM submissions"))}
+    output["實驗設定"] = pd.DataFrame([exp.model_dump(mode="json") for exp in db.list("experiment")
+        if task_id is None or any(cell.task_id == task_id for cell in exp.cells)])
+    if task_id:
+        runs = {r.website_run.id:r.website_run for r in responses if r.website_run}
+        for item in db.rows("SELECT checkpoint FROM task_items WHERE task_id=?", (task_id,)):
+            saved = json.loads(item["checkpoint"]).get("website_run")
+            if saved:
+                from .models import WebsiteRun
+                runs[saved["id"]] = WebsiteRun.model_validate(saved)
+        website_runs = list(runs.values())
+    else:
+        website_runs = db.list("website_run")
+    output["網站操作紀錄"] = pd.DataFrame([r.model_dump(mode="json") for r in website_runs])
     return {name: df.map(safe_cell) if not df.empty else df for name, df in output.items()}
 
 
@@ -99,11 +126,15 @@ def export_csv_zip(db, task_id=None):
 
 
 def export_excel(db, task_id=None):
+    return frames_excel(tables(db, task_id))
+
+
+def frames_excel(frames):
     # This is application export, not artifact authoring; Pandas is explicitly requested.
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
         from openpyxl.styles import Font, PatternFill, Alignment
-        for name, df in tables(db, task_id).items():
+        for name, df in frames.items():
             df.to_excel(writer, sheet_name=name, index=False)
             ws = writer.sheets[name]
             ws.freeze_panes = "A2"
@@ -120,8 +151,11 @@ def export_excel(db, task_id=None):
 
 def export_json(db, task_id=None):
     responses = db.responses(task_id)
-    output = {"dataset": db.metadata(), "task_id": task_id, "personas": [p.model_dump(mode="json") for p in db.list("persona")],
-        "questionnaires": [q.model_dump(mode="json") for q in db.list("questionnaire")],
+    from .models import TaskSpec
+    spec = TaskSpec.model_validate_json(db.task(task_id)["spec"]) if task_id else None
+    output = {"dataset": db.metadata(), "task_id": task_id, "personas": [p.model_dump(mode="json") for p in (spec.personas if spec else db.list("persona"))],
+        "questionnaires": [q.model_dump(mode="json") for q in ([spec.questionnaire] if spec else db.list("questionnaire"))],
+        "website_workflows": [w.model_dump(mode="json") for w in ([spec.website_workflow] if spec and spec.website_workflow else [] if spec else db.list("website_workflow"))],
         "responses": [r.model_dump(mode="json") for r in responses],
         "tables": {name: json.loads(df.to_json(orient="records", force_ascii=False)) for name, df in tables(db, task_id).items()}}
     return redact(json.dumps(output, ensure_ascii=False, indent=2)).encode("utf-8")
@@ -147,13 +181,7 @@ def distribution(responses, question_id):
 
 
 def concentration(responses):
-    def canonical(value):
-        if isinstance(value, list):
-            return sorted(value)
-        if isinstance(value, dict):
-            return {k: canonical(v) for k, v in value.items()}
-        return value
-    combinations = Counter(json.dumps([(a.question_id, canonical(a.value)) for a in r.answers], ensure_ascii=False, sort_keys=True) for r in responses)
+    combinations = Counter(json.dumps([(a.question_id, canonical(a.value), a.other_text) for a in r.answers], ensure_ascii=False, sort_keys=True) for r in responses)
     return {"不同答案組合": len(combinations), "最大重複組合人數": max(combinations.values(), default=0),
             "不同組合比例": len(combinations) / len(responses) if responses else 0}
 

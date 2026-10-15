@@ -13,6 +13,9 @@ from .models import Binding, Page, Question, Questionnaire, QuestionType, Option
 def import_json(content: str) -> Questionnaire:
     try:
         data = json.loads(content.lstrip("\ufeff"))
+        if "items" in data and "info" in data:
+            from .google_import import parse_official_form
+            return parse_official_form(data)
         data["confirmed"] = False
         return Questionnaire.model_validate(data)
     except Exception as exc:
@@ -70,10 +73,24 @@ def analyze_questionnaire(provider, questionnaire):
 def parse_google_dom(html: str, url: str) -> Questionnaire:
     """Best-effort public DOM import. Google's DOM is NOT a stable public API."""
     from bs4 import BeautifulSoup
+    from .google_import import parse_public_metadata
+    try:
+        richer = parse_public_metadata(html, url)
+    except AppError as exc:
+        if "要求登入" in str(exc):
+            raise
+        richer = None
+        metadata_warning = str(exc)
+    else:
+        metadata_warning = ""
+    if richer is not None:
+        return richer
     soup = BeautifulSoup(html, "html.parser")
     warnings = ["公開 DOM 僅能辨識目前可見頁面；未確認後續頁面、條件分流、驗證及特殊題型。請逐題人工核對並補齊整份問卷。",
                 "Google Forms DOM 不是官方穩定 API；題目 ID 優先使用可見資料屬性，否則以標題雜湊產生。改題名後需人工維護 ID。"]
     questions, seen = [], set()
+    if metadata_warning:
+        warnings.append(metadata_warning)
     blocks = soup.select('[role="listitem"]')
     for block in blocks:
         heading = block.select_one('[role="heading"]')
@@ -87,29 +104,50 @@ def parse_google_dom(html: str, url: str) -> Questionnaire:
         seen.add(id)
         options = []
         kind = QuestionType.UNSUPPORTED
+        def choice_options(controls):
+            result = []
+            for i, control in enumerate(controls):
+                is_other = control.get("data-value") == "__other_option__" or control.get("data-is-other") == "true"
+                label = "其他" if is_other else control.get("data-value") or control.get("aria-label") or control.get_text(" ", strip=True)
+                result.append(Option(id="O_OTHER" if is_other else f"O{i+1}", label=label, is_other=is_other))
+            return result
         if block.select('[role="row"]'):
             warnings.append(f"{title} 方格需人工建立列與控制項對應")
         elif block.select('[role="radio"]'):
             kind, controls = QuestionType.SINGLE, block.select('[role="radio"]')
-            options = [Option(id=f"O{i+1}", label=c.get("data-value") or c.get("aria-label") or c.get_text(" ", strip=True)) for i, c in enumerate(controls)]
+            options = choice_options(controls)
+            values = [o.label for o in options]
+            if block.get("data-question-type") in {"scale", "linear_scale"} and all(v.isdigit() for v in values):
+                numbers = [int(v) for v in values]
+                if sorted(numbers) == list(range(min(numbers), max(numbers) + 1)) and len(numbers) >= 2:
+                    kind = QuestionType.LINEAR
         elif block.select('[role="checkbox"]'):
             kind, controls = QuestionType.MULTIPLE, block.select('[role="checkbox"]')
-            options = [Option(id=f"O{i+1}", label=c.get("data-value") or c.get("aria-label") or c.get_text(" ", strip=True)) for i, c in enumerate(controls)]
+            options = choice_options(controls)
         elif block.select_one("textarea"):
             kind = QuestionType.PARAGRAPH
+        elif block.select_one("select"):
+            kind = QuestionType.DROPDOWN
+            options = [Option(id=f"O{i+1}", label=x.get_text(" ", strip=True)) for i, x in enumerate(block.select("select option")) if x.get_text(strip=True)]
         elif block.select_one('input[type="text"],input[type="email"],input[type="number"]'):
             kind = QuestionType.SHORT
+        if kind in {QuestionType.SINGLE, QuestionType.MULTIPLE} and block.select_one('input[type="text"],input:not([type]),textarea') and not any(o.is_other for o in options):
+            kind = QuestionType.UNSUPPORTED
+            warnings.append(f"{title} 含未能可靠對應的補充文字欄位，請人工設定其他選項。")
         if kind == QuestionType.UNSUPPORTED:
             warnings.append(f"{title} 題型或選項尚未解析，需人工修正")
         required = bool(block.select_one('[aria-required="true"]')) or "*" in heading.get_text()
-        questions.append(Question(id=id, title=title, type=kind, options=options, required=required,
+        bounds = {"scale_min": min(numbers), "scale_max": max(numbers)} if kind == QuestionType.LINEAR else {}
+        questions.append(Question(id=id, title=title, type=kind, options=[] if bounds else options, required=required,
+                                  **bounds,
                                   binding=Binding(title=title), notes="公開 DOM 草稿，需人工核對"))
     if not questions:
         raise AppError("未找到可可靠辨識的題目；表單可能需要登入、已關閉，或網站結構已改變。請手動匯入。")
     title_tag = soup.select_one("title")
     return Questionnaire(title=title_tag.get_text(strip=True) if title_tag else "Google Forms 匯入草稿",
                          pages=[Page(id="P1", title="公開頁面草稿", questions=questions)], source_url=url,
-                         import_warnings=warnings, confirmed=False)
+                         import_warnings=warnings, confirmed=False,
+                         import_diagnostics={"method": "visible_dom", "pages_detected": 1, "requires_manual_review": True})
 
 
 def import_google(url: str) -> Questionnaire:
@@ -127,7 +165,8 @@ def import_google(url: str) -> Questionnaire:
             final = urlsplit(page.url)
             if final.hostname != "docs.google.com" or "/forms/" not in final.path:
                 raise AppError("此表單轉至登入或非公開頁面，無法匯入。")
-            if page.locator('iframe[src*="recaptcha"],input[type="password"]').count():
+            challenges = page.locator('iframe[src*="recaptcha"][src*="bframe"],input[type="password"]')
+            if any(challenges.nth(i).is_visible() for i in range(challenges.count())):
                 raise AppError("表單需要驗證或登入，請使用手動匯入。")
             questionnaire = parse_google_dom(page.content(), page.url.split("?")[0])
             browser.close()

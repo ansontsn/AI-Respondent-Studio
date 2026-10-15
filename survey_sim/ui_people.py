@@ -28,28 +28,63 @@ def people_page(rt):
         topic = st.text_input("問卷主題或生活情境", value="一般消費與生活")
         archetype = st.selectbox("人設類型", ARCHETYPES, index=1)
         custom = st.text_area("自訂人物描述或補充情境", placeholder="可加入金融、服務、教育等主題；保留差異與例外。")
+        # The ONLYFRAME website flow is optional; its option is shown in advanced mode only.
+        choose_tier = st.session_state.get("ui_mode") == "進階模式" and st.checkbox("生成時由 AI 選定 ONLYFRAME 方案，之後固定沿用", value=False)
+        if choose_tier:
+            st.caption("AI 依背景、興趣與偏好選 BASIC、CUSTOM 或 PREMIUM，保存方案與理由；不強制平均分配。真實模型每位人物會增加一次方案選擇請求。")
+        from .ui_conditions import conditions_editor
+        with st.expander("進階受訪者條件與分布"):
+            conditions = conditions_editor("people_conditions")
+            if conditions and st.button("預覽指定條件分布"):
+                from .conditional_personas import condition_plan
+                from .v2_models import PersonaConditions
+                result = guarded(lambda: condition_plan(PersonaConditions.model_validate(conditions), count, seed))
+                if result is not None:
+                    st.dataframe(pd.DataFrame(result), hide_index=True, width="stretch")
         use_ratios = st.checkbox("混合不同類型及比例")
         ratios = {archetype: 1}
         if use_ratios:
             table = st.data_editor(pd.DataFrame({"類型": ARCHETYPES[2:9], "比例": [20., 20., 15., 15., 10., 10., 10.]}),
                 disabled=["類型"], hide_index=True, key="persona_ratios")
             ratios = dict(zip(table["類型"], table["比例"]))
-        st.caption("比例是自訂情境，不代表真實市場。相同 seed、設定及 Mock 版本可重現；真實 API 不保證逐字重現。")
-        if st.button("生成並儲存人物", type="primary", disabled=c is None):
+        st.caption("生成人物時會一併建立中文姓名，同一人物之後沿用。比例是自訂情境，不代表真實市場。相同 seed、設定及 Mock 版本可重現；真實 API 不保證逐字重現。")
+        if conditions is False:
+            st.caption("受訪者條件有格式錯誤，修正後才能生成。")
+        if st.button("生成並儲存人物", type="primary", disabled=c is None or conditions is False):
             progress = st.progress(0.)
             status = st.empty()
+            # Each click is a new batch: it adds people instead of overwriting earlier ones.
+            batch_id = uid()
             def generate():
                 engine = PersonaGenerator(make_provider(c, rt.secrets.get(c.id, c.provider), rt.db))
+                existing_names = {person.id:person.name for person in rt.db.list("persona")}
+                used_names = set(existing_names.values())
                 def save(p, done, total):
+                    from .persona_names import ensure_name, is_placeholder
+                    previous_name = existing_names.get(p.id)
+                    if previous_name and not is_placeholder(previous_name):
+                        p.name = previous_name
+                    else:
+                        ensure_name(p, used_names)
                     rt.db.save("persona", p)
+                    existing_names[p.id] = p.name
+                    used_names.add(p.name)
                     progress.progress(done / total)
                     status.caption(f"已保存 {done} / {total} 位人物")
-                return engine.generate_batch(count, seed, topic, ratios, custom, save)
+                if conditions:
+                    from .conditional_personas import ConditionalPersonaGenerator
+                    from .v2_models import PersonaConditions
+                    controlled = PersonaConditions.model_validate({**conditions, "custom_background": custom + "\n" + conditions["custom_background"]})
+                    return ConditionalPersonaGenerator(engine.provider).generate_batch(count, seed, topic, ratios, controlled, save, choose_website_tier=choose_tier, id_namespace=batch_id)
+                return engine.generate_batch(count, seed, topic, ratios, custom, save, choose_website_tier=choose_tier, id_namespace=batch_id)
             result = guarded(generate)
             if result:
-                st.success(f"已建立並保存 {len(result)} 位人物。相同設定及種子的人物 ID 會相同，重跑會更新原紀錄。")
+                st.success(f"已建立並保存 {len(result)} 位人物。每次生成都會新增一批人物，不會覆蓋既有人物或手動修改。")
                 st.dataframe(pd.DataFrame([{"人物": p.name, "類型": p.archetype, "年齡": p.background.age,
-                    "職業": p.background.occupation, "可用預算": p.background.disposable_budget} for p in result]), hide_index=True)
+                    "職業": p.background.occupation, "可用預算": p.background.disposable_budget,
+                    "固定方案": p.onlyframe_tier or "未指定", "方案理由": p.onlyframe_tier_reason} for p in result]), hide_index=True)
+                from .conditional_personas import distribution_check
+                st.json(distribution_check(result))
         uploaded = st.file_uploader("匯入人物 JSON（完整 Persona 或陣列）", type="json")
         if uploaded and st.button("儲存匯入人物"):
             def import_people():
@@ -65,6 +100,8 @@ def people_page(rt):
         if not p:
             return
         st.write(p.narrative)
+        if p.onlyframe_tier:
+            st.info(f"ONLYFRAME 固定方案：{p.onlyframe_tier} · {p.onlyframe_tier_reason}")
         st.caption(f"ID：{p.id} · 修訂 {p.revision}")
         with st.expander("完整人物資料"):
             st.json(p.model_dump())

@@ -66,6 +66,8 @@ class Database:
                     "dataset_kind": "simulation", "created_at": now(), "schema_version": 1,
                     "interpretation": "只描述模型建構情境，不代表真實受訪者或市場分布"}
             db.execute("INSERT OR IGNORE INTO workspace VALUES(1,?)", (dump(meta),))
+        from .migrations import migrate
+        migrate(self.path)
 
     @contextmanager
     def connect(self):
@@ -104,7 +106,14 @@ class Database:
                      (kind, obj.id, dump(obj), now()))
 
     def list(self, kind: str):
+        from .v2_models import Experiment, PersonaGroup
+        # A cached Database can outlive a source reload. Resolve current models
+        # at the read boundary rather than retaining the original class objects.
+        from .models import Persona, Questionnaire, ProviderConfig, FormTarget, WebsiteWorkflow, WebsiteRun
         types = {"persona": Persona, "questionnaire": Questionnaire, "provider": ProviderConfig, "target": FormTarget}
+        types["experiment"] = Experiment
+        types["persona_group"] = PersonaGroup
+        types.update(website_workflow=WebsiteWorkflow, website_run=WebsiteRun)
         return [types[kind].model_validate_json(x["body"]) for x in self.rows(
             "SELECT body FROM entities WHERE kind=? ORDER BY updated_at DESC", (kind,))]
 
@@ -119,12 +128,49 @@ class Database:
         self.execute("INSERT INTO events(task_id,level,message,created_at) VALUES(?,?,?,?)",
                      (task_id, level, redact(message), now()))
 
-    def create_task(self, spec: TaskSpec) -> str:
+    def create_task(self, spec: TaskSpec, task_id=None) -> str:
+        if spec.source_response_ids and not spec.form_target:
+            raise AppError("沿用既有回答的任務必須指定測試表單")
+        if spec.form_target:
+            from .automation import check_policy
+            for p in spec.personas:
+                response = Response(task_id="preflight", persona_id=p.id, questionnaire_id=spec.questionnaire.id,
+                    persona_snapshot=p, questionnaire_snapshot=spec.questionnaire, provider_snapshot=spec.provider, answers=[])
+                check_policy(spec.form_target, response, spec.form_allowlist, spec.form_dry_run)
+        if set(spec.source_response_ids) - {p.id for p in spec.personas}:
+            raise AppError("既有回答對應含未選人物")
+        if spec.website_survey:
+            from .staged_survey import validate_survey_flow
+            if not spec.personas:
+                raise AppError("任務需要至少一位人物。")
+            validate_survey_flow(spec)
+        if set(spec.website_tier_assignments) - {p.id for p in spec.personas} or (spec.website_tier_assignments and not spec.website_workflow):
+            raise AppError("方案分配含未選人物或尚未設定網站流程。")
+        if any(p.onlyframe_tier and p.id in spec.website_tier_assignments and spec.website_tier_assignments[p.id] != p.onlyframe_tier for p in spec.personas):
+            raise AppError("人物已有固定方案，不能用另一份方案分配覆蓋；請沿用人物方案。")
+        if spec.website_workflow:
+            from .website_experience import check_workflow
+            check_workflow(spec.website_workflow)
+            if spec.questionnaire.purpose != "test":
+                raise AppError("網站操作模擬只接獨立測試問卷；正式問卷請保留為參考，不自動生成研究樣本。")
+            if set(spec.website_fact_bindings) - {q.id for q in spec.questionnaire.questions}:
+                raise AppError("網站事實題對應含不存在的題目 ID，請先修正，不會執行網站提交。")
+            if spec.website_fact_bindings and not spec.website_survey:
+                from .website_experience import workflow_for_person, make_plan, factual_values
+                from .models import WebsiteRun
+                for person in spec.personas:
+                    workflow = workflow_for_person(spec, person.id)
+                    prototype = WebsiteRun(workflow_id=workflow.id, persona_id=person.id, url=workflow.url,
+                        plan=make_plan(workflow,person,spec.seed), mode=workflow.mode,
+                        status="preview_completed" if workflow.mode=="preview" else "server_confirmed" if workflow.require_server_receipt else "local_saved")
+                    factual_values(spec.questionnaire,spec.website_fact_bindings,prototype)
         if not spec.questionnaire.confirmed:
             raise AppError("請先在問卷管理確認題目、選項及分流。")
         if not spec.personas or len({p.id for p in spec.personas}) != len(spec.personas):
             raise AppError("任務需要至少一位人物且人物 ID 不可重複。")
-        id = uid()
+        if any(q.type.value == "unsupported" for q in spec.questionnaire.questions):
+            raise AppError("問卷尚有不支援題型，請先修正及確認。")
+        id = task_id or uid()
         with self.connect() as db:
             db.execute("INSERT INTO tasks VALUES(?,?,?,?,?)", (id, dump(spec), "ready", now(), now()))
             db.executemany("INSERT INTO task_items(task_id,persona_id) VALUES(?,?)", [(id, p.id) for p in spec.personas])
@@ -155,17 +201,19 @@ class Database:
     def checkpoint(self, task_id: str, persona_id: str, value: dict):
         self.execute("UPDATE task_items SET checkpoint=? WHERE task_id=? AND persona_id=?", (dump(value), task_id, persona_id))
 
-    def save_response(self, response: Response):
+    def save_response(self, response: Response, pending_form=False):
         with self.connect() as db:
             db.execute("INSERT INTO responses VALUES(?,?,?,?,?,?,?)", (response.id, response.task_id, response.persona_id,
                 response.questionnaire_id, response.status, dump(response), response.created_at))
-            db.executemany("INSERT INTO answers VALUES(?,?,?,?,?)", [(response.id, a.question_id, dump(a.value), a.rationale, a.validation)
+            db.executemany("INSERT INTO answers(response_id,question_id,value,rationale,validation,other_text) VALUES(?,?,?,?,?,?)", [(response.id, a.question_id, dump(a.value), a.rationale, a.validation, a.other_text)
                                                                     for a in response.answers])
-            db.execute("UPDATE task_items SET status=?,error=?,checkpoint='{}' WHERE task_id=? AND persona_id=?",
-                       ("invalid" if response.status == "error" else "completed", "回答存在明確錯誤" if response.status == "error" else "",
+            db.execute("UPDATE task_items SET status=?,error=?,checkpoint=? WHERE task_id=? AND persona_id=?",
+                       ("invalid" if response.status == "error" else "running" if pending_form else "completed", "回答存在明確錯誤" if response.status == "error" else "",
+                        dump({"response_id": response.id}) if pending_form else "{}",
                         response.task_id, response.persona_id))
 
     def responses(self, task_id: str | None = None):
+        from .models import Response
         rows = self.rows("SELECT body FROM responses" + (" WHERE task_id=?" if task_id else "") + " ORDER BY created_at",
                          (task_id,) if task_id else ())
         return [Response.model_validate_json(x["body"]) for x in rows]
@@ -174,6 +222,7 @@ class Database:
         with self.connect() as db:
             db.execute("UPDATE tasks SET status='paused',updated_at=? WHERE status='running'", (now(),))
             db.execute("UPDATE task_items SET status='pending',error='上次執行中斷，保留頁面進度' WHERE status='running'")
+            db.execute("UPDATE workbench_jobs SET status='paused',updated_at=? WHERE status='running'", (now(),))
             # Never retry a submission that might have reached the server automatically.
             db.execute("UPDATE submissions SET status='unknown',message='程式中斷；需人工查證是否送達',updated_at=? WHERE status='submitting'", (now(),))
 
@@ -184,8 +233,8 @@ class Database:
         self.task_status(task_id, "ready")
 
     def reserve_submission(self, response_id: str, target: FormTarget, dry_run: bool) -> str:
-        from .security import clean_url
-        url = clean_url(target.url)
+        from .security import clean_form_url
+        url = clean_form_url(target.url)
         id = uid()
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -202,8 +251,30 @@ class Database:
         from .security import redact
         self.execute("UPDATE submissions SET status=?,message=?,artifact=?,updated_at=? WHERE id=?", (status, redact(message), artifact, now(), id))
 
+    def resolve_submission(self, id: str, resolution: str):
+        """Record a manual check of an 'unknown' submission and update the waiting task item."""
+        if resolution not in {"success", "failed"}:
+            raise AppError("查證結果只能是已收到或未收到。")
+        rows = self.rows("SELECT s.status,r.task_id,r.persona_id FROM submissions s LEFT JOIN responses r ON r.id=s.response_id WHERE s.id=?", (id,))
+        if not rows or rows[0]["status"] != "unknown":
+            raise AppError("只有「提交狀態不明」的紀錄需要人工查證。")
+        self.finish_submission(id, resolution, "使用者已人工查證接收端狀態")
+        row = rows[0]
+        if row["task_id"]:
+            status, message = (("completed", "已人工查證收到") if resolution == "success" else
+                               ("failed", "已人工查證未收到；可按重新執行失敗項目再填表"))
+            self.execute("UPDATE task_items SET status=?,error=? WHERE task_id=? AND persona_id=? AND status='unknown'",
+                         (status, message, row["task_id"], row["persona_id"]))
+
     def backup(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as source:
             with sqlite3.connect(path) as target:
                 source.backup(target)
+
+    def update_budget(self, task_id, limit):
+        spec = TaskSpec.model_validate_json(self.task(task_id)["spec"])
+        before = spec.budget_limit
+        spec.budget_limit = limit
+        self.execute("UPDATE tasks SET spec=?,updated_at=? WHERE id=?", (dump(spec), now(), task_id))
+        self.event(task_id, f"使用者調整任務預算：{before} → {limit}")

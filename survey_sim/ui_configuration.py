@@ -1,42 +1,13 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import pandas as pd
 import streamlit as st
 
 from .models import ProviderConfig
 from .providers import DEFAULT_URLS, make_provider, test_connection
-from .ui import guarded, select_entity, record_table
+from .ui import guarded, record_table
 
 PROVIDERS = {"mock": "Mock 功能測試", "openai": "OpenAI", "deepseek": "DeepSeek", "gemini": "Google Gemini",
              "anthropic": "Anthropic Claude", "ollama": "Ollama 本地模型", "compatible": "其他 OpenAI 相容 API"}
-
-
-def dashboard(rt):
-    st.caption("從匯入問卷及建立人物開始，再到模擬控制台執行。資料即時保存到本機。")
-    db = rt.db
-    metrics = [("虛擬人物", len(db.list("persona"))), ("問卷", len(db.list("questionnaire"))),
-               ("完成回答", len(db.responses())), ("執行任務", len(db.rows("SELECT id FROM tasks")))]
-    for col, (label, value) in zip(st.columns(4), metrics):
-        col.metric(label, value)
-    left, right = st.columns(2)
-    with left:
-        st.subheader("回答與邏輯驗證")
-        status = db.rows("SELECT status,count(*) AS 數量 FROM responses GROUP BY status")
-        record_table(status)
-        st.subheader("最近任務")
-        record_table(db.rows("SELECT id,status,created_at FROM tasks ORDER BY created_at DESC LIMIT 8"))
-    with right:
-        st.subheader("測試提交")
-        record_table(db.rows("SELECT status,count(*) AS 數量 FROM submissions GROUP BY status"))
-        st.subheader("API 用量")
-        record_table(db.rows("SELECT provider,model,count(*) AS 請求數,sum(input_tokens) AS 輸入Token,sum(output_tokens) AS 輸出Token FROM usage GROUP BY provider,model"), "尚無 API 請求；Mock 不產生 Token 用量。")
-        st.caption("成本僅在兩項單價及可查證的費率來源皆有設定時估算；未設定時保持空白。")
-        costs = db.rows("SELECT provider,model,currency AS 幣別,sum(cost) AS 估算費用,count(cost) AS 可估算請求數 FROM usage GROUP BY provider,model,currency")
-        record_table(costs, "尚無可統計的 API 費用。")
-    st.info("初次使用：問卷管理確認範例 → 虛擬人物管理生成 10 人 → AI 模擬控制台 → 回答檢查 → 自動填表測試。")
 
 
 def providers_page(rt):
@@ -84,10 +55,11 @@ def providers_page(rt):
                 temperature=temp if enable_temp else None, max_tokens=max_tokens, timeout=timeout, retries=retries, request_interval=request_interval,
                 json_mode=json_mode, token_parameter=token_parameter, input_price_per_million=input_price if enabled_cost else None,
                 output_price_per_million=output_price if enabled_cost else None, rate_source=rate_source, rate_currency=currency)
-            if api_key:
-                rt.secrets.put(updated.id, api_key, persistent)
+            # Save the profile first so a credential-store failure cannot discard it.
             rt.db.save("provider", updated)
             rt.set_setting("active_provider", updated.id)
+            if api_key:
+                rt.secrets.put(updated.id, api_key, persistent)
             st.success("模型設定已保存。金鑰不會寫入 SQLite 或匯出檔。")
         guarded(save_config)
     if existing:

@@ -9,3 +9,8 @@ artifacts/
 *.pyc
 outputs/*.zip
 outputs/source-package.json
+backups/
+outputs/**/*.sqlite3
+outputs/**/saved-design.json
+outputs/**/record.json
+outputs/**/insert-payload.json

@@ -5,7 +5,7 @@ import os
 import re
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 from .errors import AppError
 
@@ -61,7 +61,8 @@ class SecretStore:
             try:
                 import keyring
                 backend = keyring.get_keyring()
-                if "Windows" not in type(backend).__name__ and os.name == "nt":
+                # The Windows backend class is WinVaultKeyring in keyring.backends.Windows.
+                if os.name == "nt" and type(backend).__module__ != "keyring.backends.Windows":
                     raise RuntimeError("Windows credential backend unavailable")
                 keyring.set_password("AIQuestionnaireSimulator", config_id, key)
             except Exception as exc:
@@ -95,3 +96,19 @@ def clean_url(url: str, *, api: bool = False) -> str:
     if api and p.scheme != "https" and p.hostname not in {"localhost", "127.0.0.1", "::1"}:
         raise AppError("遠端 API 必須使用 HTTPS；HTTP 僅限本機。")
     return urlunsplit((p.scheme.lower(), p.netloc.lower(), p.path.rstrip("/"), "", ""))
+
+
+def clean_form_url(url: str) -> str:
+    """Strip known Google responder sharing metadata, retaining strict API validation."""
+    p = urlsplit(url.strip())
+    google_responder = (p.scheme.lower() == "https" and p.hostname == "docs.google.com" and
+        re.fullmatch(r"/forms/(?:u/\d+/)?d/(?:e/)?[A-Za-z0-9_-]+/viewform/?", p.path))
+    if google_responder and p.query and not p.fragment:
+        try:
+            parameters = parse_qsl(p.query, keep_blank_values=True, strict_parsing=True)
+        except ValueError:
+            parameters = []
+        if parameters and all(key == "usp" and value in {"dialog", "sf_link", "send_form", "sharing", "pp_url"}
+                              for key, value in parameters):
+            return clean_url(urlunsplit((p.scheme, p.netloc, p.path, "", "")))
+    return clean_url(url)

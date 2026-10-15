@@ -1,0 +1,633 @@
+{
+  "source": "User-provided form; first-page DOM inspected on 2026-10-14; headings and public question metadata only. No answer values or browser tokens.",
+  "page": {
+    "id": "P1",
+    "title": "第一頁",
+    "questions": [
+      {
+        "id": "G_918909489",
+        "title": "您的年齡範圍為何？",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_9c98ed7e2197",
+            "label": "18～20歲",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_fa1d659e8452",
+            "label": "21～24歲",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_ae440c573584",
+            "label": "25～29歲",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_a89325124609",
+            "label": "30～39歲",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_711c8a3d94c1",
+            "label": "40歲以上",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "您的年齡範圍為何？",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_423151034",
+        "title": "Q1. 您是否有實體小卡的收藏經驗？本問卷所稱的小卡，是指偶像、動漫、遊戲或其他主題的實體收藏卡，不包含名片、會員卡或信用卡。",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_c3a73ecf19e4",
+            "label": "目前有收藏。",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_f6b1e9f3d8f3",
+            "label": "過去曾收藏，目前沒有收藏。",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_ffdd8ed5908e",
+            "label": "從未收藏。",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q1. 您是否有實體小卡的收藏經驗？本問卷所稱的小卡，是指偶像、動漫、遊戲或其他主題的實體收藏卡，不包含名片、會員卡或信用卡。",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_1654015254",
+        "title": "Q2. 您目前或過去曾收藏哪些類型的小卡？（可複選）",
+        "type": "multiple",
+        "required": true,
+        "options": [
+          {
+            "id": "O_a4ca0c759955",
+            "label": "K-POP 偶像小卡",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_f791934ac369",
+            "label": "其他偶像或藝人小卡",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_96ff231dedb7",
+            "label": "動漫收藏卡",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_474706220c92",
+            "label": "遊戲相關收藏卡",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_0a7547e0e205",
+            "label": "從未收藏",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_OTHER",
+            "label": "其他",
+            "is_other": true,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q2. 您目前或過去曾收藏哪些類型的小卡？（可複選）",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_587580527",
+        "title": "Q3. 過去30天，您有多少天曾查看自己收藏的小卡？",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_a0cd5e00e3c7",
+            "label": "0天",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_2b099f8f0205",
+            "label": "1–3天",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_edcfe55914b5",
+            "label": "4–10天",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_d8d9e1c1f74f",
+            "label": "11–20天",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_588ef7d8784e",
+            "label": "21–30天",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q3. 過去30天，您有多少天曾查看自己收藏的小卡？",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_670020729",
+        "title": "Q4. 您曾購買哪些小卡展示或保護用品？（可複選）",
+        "type": "multiple",
+        "required": true,
+        "options": [
+          {
+            "id": "O_b3c18337efcf",
+            "label": "小卡保護框",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_2034e6c9452c",
+            "label": "小卡保護套",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_535473db84d2",
+            "label": "卡冊/收納冊",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_1012b239e3de",
+            "label": "我從未收藏過",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_OTHER",
+            "label": "其他",
+            "is_other": true,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q4. 您曾購買哪些小卡展示或保護用品？（可複選）",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_158883468",
+        "title": "請回想您最近一次購買小卡展示或保護用品。您當時購買的原因有哪些？（可複選）",
+        "type": "multiple",
+        "required": true,
+        "options": [
+          {
+            "id": "O_5d9054f0ac2b",
+            "label": "想把喜歡的小卡擺出來欣賞",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_8599cb1fbb7f",
+            "label": "想保護小卡，減少損傷",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_ef07488cf3b8",
+            "label": "想裝飾房間或收藏空間",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_e62726eab0df",
+            "label": "想維持小卡品相，方便日後交換或出售",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_2f4ef96073d4",
+            "label": "想方便放入卡冊或其他收納用品",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_52f4679f5d30",
+            "label": "喜歡外觀或裝飾效果",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_57d3e2f2a3fb",
+            "label": "沒有收藏經驗",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "請回想您最近一次購買小卡展示或保護用品。您當時購買的原因有哪些？（可複選）",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_812356625",
+        "title": "在上述原因中，哪一項最直接促使您購買？",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_5d9054f0ac2b",
+            "label": "想把喜歡的小卡擺出來欣賞",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_8599cb1fbb7f",
+            "label": "想保護小卡，減少損傷",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_ef07488cf3b8",
+            "label": "想裝飾房間或收藏空間",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_e62726eab0df",
+            "label": "想維持小卡品相，方便日後交換或出售",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_2f4ef96073d4",
+            "label": "想方便放入卡冊或其他收納用品",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_52f4679f5d30",
+            "label": "喜歡外觀或裝飾效果",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_57d3e2f2a3fb",
+            "label": "沒有收藏經驗",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "在上述原因中，哪一項最直接促使您購買？",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_1338081863",
+        "title": "Q5. 您是否曾使用可以自行選擇外觀或加入個人內容的客製化商品？\n例如可選擇外觀的手機殼、可加入文字的商品",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_b5141d3d19e9",
+            "label": "是",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_0c70665b6eb6",
+            "label": "否",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_f6138af83cdb",
+            "label": "不確定",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q5. 您是否曾使用可以自行選擇外觀或加入個人內容的客製化商品？\n例如可選擇外觀的手機殼、可加入文字的商品",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_868200729",
+        "title": "Q6. 我平常喜歡自行設計商品的外觀",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_aeaf6923b1ea",
+            "label": "非常不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_0c04b3a5f184",
+            "label": "不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_de907d10df98",
+            "label": "普通",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_905819e2e3a0",
+            "label": "同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_5d055c759011",
+            "label": "非常同意",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q6. 我平常喜歡自行設計商品的外觀",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_1717331772",
+        "title": "Q7. 若能自行決定商品的外觀，我通常願意參與設計",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_aeaf6923b1ea",
+            "label": "非常不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_0c04b3a5f184",
+            "label": "不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_de907d10df98",
+            "label": "普通",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_905819e2e3a0",
+            "label": "同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_5d055c759011",
+            "label": "非常同意",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q7. 若能自行決定商品的外觀，我通常願意參與設計",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      },
+      {
+        "id": "G_2145277425",
+        "title": "Q8. 我會使用網站上的客製化設計工具",
+        "type": "single",
+        "required": true,
+        "options": [
+          {
+            "id": "O_aeaf6923b1ea",
+            "label": "非常不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_0c04b3a5f184",
+            "label": "不同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_de907d10df98",
+            "label": "普通",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_905819e2e3a0",
+            "label": "同意",
+            "is_other": false,
+            "trait_weights": {}
+          },
+          {
+            "id": "O_5d055c759011",
+            "label": "非常同意",
+            "is_other": false,
+            "trait_weights": {}
+          }
+        ],
+        "rows": [],
+        "scale_min": 1,
+        "scale_max": 5,
+        "min_choices": 0,
+        "max_choices": null,
+        "max_length": 2000,
+        "concept": "",
+        "trait": "",
+        "reverse": false,
+        "persona_field": "",
+        "display_if": [],
+        "binding": {
+          "container_selector": "",
+          "title": "Q8. 我會使用網站上的客製化設計工具",
+          "option_labels": {},
+          "row_selectors": {}
+        },
+        "notes": ""
+      }
+    ],
+    "routes": [],
+    "default_next": "P_728103703"
+  }
+}

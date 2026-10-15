@@ -1,5 +1,6 @@
 import copy
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -121,5 +122,31 @@ def test_real_submission_unconfirmed_success_is_unknown(db, saved_response, tmp_
         assert db.rows("SELECT status FROM submissions")[0]["status"] == "unknown"
         with pytest.raises(AppError, match="重複提交"):
             automation.run(t, saved_response, [t.url], False)
+    finally:
+        server.close()
+
+
+@pytest.mark.browser
+def test_click_without_final_post_is_failed_and_keeps_after_click_artifact(db, saved_response, tmp_path, monkeypatch):
+    server = MockFormServer(db, 0).start()
+    try:
+        target = FormTarget(name="無提交請求", url=server.url(saved_response.questionnaire_id),
+            questionnaire_id=saved_response.questionnaire_id, authorized=True,
+            success_selector="#success[data-receipt]")
+        original = FormAutomation.navigation_button
+
+        class NoPostButton:
+            def count(self): return 1
+            def is_visible(self): return True
+            def click(self): return None
+
+        monkeypatch.setattr(FormAutomation, "navigation_button",
+            lambda self, page, form, *, submit=False: NoPostButton() if submit else original(self, page, form, submit=False))
+        with pytest.raises(AppError, match="未發出最後提交請求"):
+            FormAutomation(db, tmp_path).run(target, saved_response, [target.url], False)
+        record = db.rows("SELECT status,message,artifact FROM submissions")[0]
+        assert record["status"] == "failed" and "最後提交請求 0" in record["message"]
+        assert Path(record["artifact"]).is_file()
+        assert not db.rows("SELECT * FROM local_receipts")
     finally:
         server.close()

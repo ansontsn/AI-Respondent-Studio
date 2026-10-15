@@ -15,12 +15,29 @@ def runtime():
     return Runtime()
 
 
+def friendly_error(exc):
+    """Readable Chinese text for the UI; Python / pydantic internals stay in the debug log."""
+    import json
+    if isinstance(exc, ValidationError):
+        from .personas import validation_details
+        return "資料格式不符合要求：" + validation_details(exc)
+    if isinstance(exc, json.JSONDecodeError):
+        return f"JSON 格式錯誤：第 {exc.lineno} 行第 {exc.colno} 個字附近，請檢查括號、引號與逗號。"
+    if isinstance(exc, AppError):
+        return str(exc)
+    text = str(exc)
+    # Built-in ValueError messages are English; our own ValueErrors are Chinese.
+    if not any("一" <= ch <= "鿿" for ch in text):
+        return "輸入值格式不正確，請檢查剛才輸入的數字、清單或 JSON。"
+    return text
+
+
 def guarded(action):
     try:
         return action()
     except (AppError, ValidationError, ValueError) as exc:
         logging.getLogger("survey_sim.ui").exception("UI action failed")
-        st.error(redact(str(exc)))
+        st.error(redact(friendly_error(exc)))
     except Exception:
         logging.getLogger("survey_sim.ui").exception("Unexpected UI failure")
         st.error("操作未完成，請檢查設定；詳細原因已保存到除錯日誌。")
@@ -62,20 +79,41 @@ def main():
     .block-container{padding-top:2rem;padding-bottom:3rem;max-width:1500px}
     </style>''', unsafe_allow_html=True)
     rt = runtime()
+    from .batch import BatchRunner
+    from .storage import Database
+    if type(rt.db) is not Database or not hasattr(rt.runner, "_fill_response"):
+        if rt.runner.thread and rt.runner.thread.is_alive():
+            st.warning("現有批次仍在執行；完成或暫停後再載入新版介面。已完成資料會保留。")
+            return
+        rt.db = Database(rt.db.path)
+        rt.runner = BatchRunner(rt.db, rt.secrets)
+        if rt.mock_server:
+            rt.mock_server.db = rt.db
+    from .ui_configuration import providers_page
+    from .ui_questionnaires import questionnaires_page
+    from .ui_simple_provider import simple_providers
+    from .ui_pipeline import workbench_page, people_library, history_page
+    pages = {"問卷工作台": workbench_page, "人物資料庫": people_library, "問卷管理": questionnaires_page,
+             "任務紀錄": history_page, "AI 模型設定": simple_providers}
+    old_section = st.session_state.get("nav")
+    if old_section and old_section not in pages:
+        st.session_state["nav"] = "人物資料庫" if old_section == "虛擬人物管理" else "任務紀錄"
+        if old_section == "虛擬人物管理":
+            st.session_state["people_view"] = "建立與編輯"
+        else:
+            st.session_state["history_view"] = old_section
+            from .ui_pipeline import CORE_TOOLS
+            if old_section not in CORE_TOOLS:
+                st.session_state["ui_mode"] = "進階模式"  # older tools live in advanced mode
     with st.sidebar:
         st.title("◈ 問卷工作台")
-        st.caption("AI問卷自動填寫 · v1.0")
-        section = st.radio("功能導覽", ["儀表板", "AI 模型設定", "問卷管理", "虛擬人物管理", "AI 模擬控制台", "回答檢查", "自動填表測試", "結果分析", "系統設定"], label_visibility="collapsed", key="nav")
+        st.caption("AI 問卷模擬平台 · V2")
+        section = st.radio("功能導覽", list(pages), label_visibility="collapsed", key="nav")
+        mode = st.radio("操作模式", ["簡易模式", "進階模式"], key="ui_mode")
         st.divider()
         st.caption("資料來源：AI 虛擬人物與問卷測試。此工作區與正式研究樣本分開，分析描述模型情境。")
         st.caption("Mock 為規則測試模式，回答品質未代表大型語言模型。")
     st.title(section)
-    from .ui_configuration import dashboard, providers_page, settings_page
-    from .ui_questionnaires import questionnaires_page
-    from .ui_people import people_page
-    from .ui_operations import console_page, automation_page
-    from .ui_results import review_page, analysis_page
-    pages = {"儀表板": dashboard, "AI 模型設定": providers_page, "問卷管理": questionnaires_page,
-             "虛擬人物管理": people_page, "AI 模擬控制台": console_page, "回答檢查": review_page,
-             "自動填表測試": automation_page, "結果分析": analysis_page, "系統設定": settings_page}
+    if mode == "進階模式":
+        pages["AI 模型設定"] = providers_page
     guarded(lambda: pages[section](rt))

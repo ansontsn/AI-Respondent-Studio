@@ -29,6 +29,26 @@ def review_page(rt):
     if not responses:
         st.info("尚無回答。請先執行模擬任務。")
         return
+    search = st.text_input("搜尋回答人物、職業或問卷", key="response_search")
+    age = st.slider("回答人物年齡範圍", 18, 100, (18, 100), key="response_age")
+    responses = [r for r in responses if age[0] <= r.persona_snapshot.background.age <= age[1] and
+        search.casefold() in (r.persona_snapshot.name + r.persona_snapshot.background.occupation + r.questionnaire_snapshot.title).casefold()]
+    if not responses:
+        st.info("沒有符合篩選條件的回答。")
+        return
+    if st.checkbox("比較多位人物的回答", key="response_compare"):
+        mapping = {r.id: r for r in responses}
+        chosen = st.multiselect("比較回答", list(mapping), default=list(mapping)[:5],
+            format_func=lambda i: mapping[i].persona_snapshot.name + " · " + i[:8])
+        rows = []
+        for response_id in chosen:
+            response = mapping[response_id]
+            questions = {q.id: q for q in response.questionnaire_snapshot.questions}
+            rows.extend({"問卷": response.questionnaire_snapshot.title, "版本": response.questionnaire_snapshot.revision,
+                "題目": questions[a.question_id].title, "人物": response.persona_snapshot.name + " · " + response.id[:8],
+                "答案": display_answer(questions[a.question_id], a.value, a.other_text)} for a in response.answers)
+        if rows:
+            st.dataframe(pd.DataFrame(rows).pivot_table(index=["問卷", "版本", "題目"], columns="人物", values="答案", aggfunc="first"), width="stretch")
     ids = {r.id: r for r in responses}
     selected = st.selectbox("人物回答紀錄", list(ids), format_func=lambda v: f"{ids[v].persona_snapshot.name} · {ids[v].questionnaire_snapshot.title} · {ids[v].status} · {v[:8]}")
     r = ids[selected]
@@ -36,7 +56,7 @@ def review_page(rt):
     st.write("實際分流路徑：" + " → ".join(r.visited_pages))
     questions = {q.id: q for q in r.questionnaire_snapshot.questions}
     names = {"passed": "通過", "review": "需要人工檢查", "error": "明確錯誤", "skipped": "分流略過"}
-    df = pd.DataFrame([{"題目 ID": a.question_id, "題目": questions[a.question_id].title, "答案": display_answer(questions[a.question_id], a.value),
+    df = pd.DataFrame([{"題目 ID": a.question_id, "題目": questions[a.question_id].title, "答案": display_answer(questions[a.question_id], a.value, a.other_text), "其他補充文字": a.other_text,
                        "決策依據": a.rationale, "驗證": names[a.validation]} for a in r.answers])
     st.dataframe(df, hide_index=True, width="stretch", column_config={"決策依據": st.column_config.TextColumn(width="large")})
     st.caption("決策依據是模型輸出的模擬解釋，可用來檢查人設與情境，並非人類心理的觀察證據。")
@@ -48,9 +68,28 @@ def review_page(rt):
     if r.repair_history:
         st.subheader("自動修正歷程")
         record_table(r.repair_history)
+    if r.website_run:
+        with st.expander("實際網站操作與設計保存證據"):
+            from .ui_website import show_run
+            show_run(r.website_run)
+    if r.form_result:
+        st.info(r.form_result.get("message", ""))
+        artifact = r.form_result.get("artifact")
+        if artifact:
+            from pathlib import Path
+            if Path(artifact).is_file():
+                with st.expander("分階段問卷完成畫面"):
+                    st.image(artifact)
     with st.expander("人物與問卷快照"):
         st.json(r.persona_snapshot.model_dump())
         st.json(r.questionnaire_snapshot.model_dump(mode="json"))
+    if st.button("重新生成此人物答案", key="regenerate_" + r.id):
+        def regenerate_one():
+            from .quality import regenerate
+            task_id = regenerate(rt.db, [r.id])
+            rt.runner.start(task_id)
+            st.success("已建立單筆重新生成任務，原回答保留；進度可在 AI 模擬控制台查看。")
+        guarded(regenerate_one)
     export_buttons(rt, r.task_id)
 
 

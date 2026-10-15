@@ -39,8 +39,8 @@ def main():
     parser.add_argument("--browser", action="store_true")
     parser.add_argument("--data-dir")
     args = parser.parse_args()
-    write_examples()
     if args.command == "examples":
+        write_examples()
         print("已建立 examples 範例人物、問卷及 CSV。")
         return
     rt = Runtime(args.data_dir)
